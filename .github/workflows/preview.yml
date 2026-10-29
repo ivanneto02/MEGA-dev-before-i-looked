@@ -1,0 +1,57 @@
+name: Publish digest preview
+on:
+  workflow_dispatch:
+    inputs:
+      clean:
+        description: Remove the marker after review and human approval
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: digest-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.3.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test && pnpm typecheck
+      - name: Capture requested preview
+        env:
+          LANE_MARKER: ${{ secrets.LANE_MARKER }}
+          CLEAN: ${{ inputs.clean }}
+        run: |
+          if [ "$CLEAN" = true ]; then
+            node scripts/capture-preview.mjs --clean
+          else
+            node scripts/capture-preview.mjs
+          fi
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: var/preview
+          retention-days: 1
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
