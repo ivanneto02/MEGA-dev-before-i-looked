@@ -157,11 +157,11 @@ describe('digest routes', () => {
 
     expect(response.status).toBe(200);
     expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
-    expect(html).toContain('&lt;script&gt;alert("owner")&lt;/script&gt;');
-    expect(html).toContain('&lt;script&gt;alert("error")&lt;/script&gt;');
+    expect(html).toContain('&lt;script&gt;alert(&quot;owner&quot;)&lt;/script&gt;');
+    expect(html).toContain('&lt;script&gt;alert(&quot;error&quot;)&lt;/script&gt;');
     expect(html).not.toContain('<img src=x');
     expect(html).not.toContain('<script>');
-    expect(html).not.toMatch(/<script\b|\son[a-z]+\s*=/i);
+    expect(html).not.toMatch(/<script\b|<[^>]*\son[a-z]+\s*=/i);
   });
 
   it('rejects invalid calendar dates and path-like night parameters', async () => {
